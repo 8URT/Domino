@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Domino Lakaz — Mauritian 4-Player Domino</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --felt-1:#0b4630;
+    --felt-2:#0e5a3d;
+    --wood:#4a2f1c;
+    --wood-light:#6b4426;
+    --ivory:#f6f1e4;
+    --ivory-dim:#e8dfc9;
+    --ink:#20180f;
+    --gold:#c9a24b;
+    --gold-bright:#e3c273;
+    --team-a:#d98e3c;
+    --team-b:#3c8fa8;
+    --danger:#c14b3a;
+    --line:rgba(246,241,228,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Work Sans',sans-serif;
+    color:var(--ivory);
+    background:
+      radial-gradient(1200px 800px at 50% -10%, #10603f 0%, transparent 60%),
+      linear-gradient(160deg, var(--felt-2), var(--felt-1) 60%, #072f20 100%);
+    min-height:100%;
+    overflow-x:hidden;
+  }
+  h1,h2,h3{font-family:'Fraunces',serif;font-weight:700;margin:0;}
+  .screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px 48px;}
+  .hidden{display:none !important;}
+
+  /* ---------- Landing ---------- */
+  .brand{text-align:center;margin:28px 0 8px;}
+  .brand .eyebrow{
+    letter-spacing:.18em;text-transform:uppercase;font-size:11px;color:var(--gold-bright);
+    font-weight:600;margin-bottom:10px;
+  }
+  .brand h1{font-size:44px;line-height:1.02;color:var(--ivory);}
+  .brand h1 em{font-style:italic;color:var(--gold-bright);}
+  .brand p{color:var(--ivory-dim);max-width:440px;margin:14px auto 0;font-size:15px;line-height:1.5;}
+
+  .domino-divider{display:flex;gap:6px;justify-content:center;margin:22px 0;}
+  .domino-divider .pip-mini{width:10px;height:10px;border-radius:50%;background:var(--gold);opacity:.5;}
+  .domino-divider .pip-mini:nth-child(2){opacity:.8;}
+  .domino-divider .pip-mini:nth-child(3){opacity:1;}
+
+  .card{
+    background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:26px;
+    width:100%;
+    max-width:420px;
+    backdrop-filter:blur(6px);
+    box-shadow:0 20px 50px rgba(0,0,0,0.35);
+  }
+  .card + .card{margin-top:18px;}
+  .card h2{font-size:19px;color:var(--ivory);margin-bottom:4px;}
+  .card .sub{color:var(--ivory-dim);font-size:13px;margin-bottom:16px;}
+  label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-bright);margin:14px 0 6px;font-weight:600;}
+  input[type=text]{
+    width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);
+    background:rgba(0,0,0,0.2);color:var(--ivory);font-size:16px;font-family:'Work Sans',sans-serif;
+    outline:none;
+  }
+  input[type=text]:focus{border-color:var(--gold);}
+  input[type=text].code-input{text-transform:uppercase;letter-spacing:.3em;font-weight:700;text-align:center;font-size:20px;}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:12px 20px;border-radius:10px;border:none;cursor:pointer;
+    font-family:'Work Sans',sans-serif;font-weight:600;font-size:15px;
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+    width:100%;margin-top:16px;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-gold{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#241a08;box-shadow:0 6px 18px rgba(201,162,75,0.35);}
+  .btn-outline{background:transparent;border:1px solid var(--gold);color:var(--gold-bright);}
+  .btn-danger{background:linear-gradient(180deg,#d96a56,var(--danger));color:#fff;}
+  .btn-small{width:auto;padding:8px 14px;font-size:13px;margin-top:0;}
+  .err{color:#ff9c8b;font-size:13px;margin-top:10px;min-height:16px;}
+  .divider-or{display:flex;align-items:center;gap:10px;color:var(--ivory-dim);font-size:12px;margin:22px 0;width:100%;max-width:420px;}
+  .divider-or::before,.divider-or::after{content:"";flex:1;height:1px;background:var(--line);}
+
+  .footnote{color:var(--ivory-dim);opacity:.65;font-size:11.5px;max-width:420px;text-align:center;margin-top:22px;line-height:1.5;}
+
+  /* ---------- Lobby ---------- */
+  .roomcode-badge{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    background:rgba(0,0,0,0.25);border:1px dashed var(--gold);border-radius:12px;
+    padding:14px;margin-bottom:6px;
+  }
+  .roomcode-badge .code{font-family:'Fraunces',serif;font-size:30px;letter-spacing:.24em;color:var(--gold-bright);font-weight:700;}
+  .seat-list{display:flex;flex-direction:column;gap:8px;margin:16px 0;}
+  .seat-row{
+    display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;
+    background:rgba(255,255,255,0.04);border:1px solid var(--line);
+  }
+  .seat-row.filled{border-color:rgba(201,162,75,0.4);}
+  .seat-dot{width:10px;height:10px;border-radius:50%;background:#555;flex:none;}
+  .seat-row.filled .seat-dot{background:var(--gold-bright);}
+  .seat-row .name{flex:1;font-weight:600;}
+  .seat-row .tag{font-size:11px;color:var(--ivory-dim);text-transform:uppercase;letter-spacing:.06em;}
+  .seat-row.team-a .seat-dot{background:var(--team-a);}
+  .seat-row.team-b .seat-dot{background:var(--team-b);}
+
+  /* ---------- Game screen ---------- */
+  .table-wrap{width:100%;max-width:760px;}
+  .topbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 14px;background:rgba(0,0,0,0.25);border-radius:12px;margin-bottom:14px;border:1px solid var(--line);
+    flex-wrap:wrap;gap:8px;
+  }
+  .score-pill{display:flex;gap:14px;font-size:13px;align-items:center;}
+  .score-pill .team{display:flex;align-items:center;gap:6px;font-weight:700;}
+  .swatch{width:9px;height:9px;border-radius:50%;}
+  .swatch.a{background:var(--team-a);} .swatch.b{background:var(--team-b);}
+  .topbar .roomtag{font-size:11px;color:var(--ivory-dim);letter-spacing:.08em;}
+  .icon-btn{background:none;border:1px solid var(--line);color:var(--ivory-dim);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;}
+  .icon-btn:hover{border-color:var(--gold);color:var(--gold-bright);}
+
+  .table{
+    position:relative;
+    background:
+      radial-gradient(circle at 50% 45%, #0f6b45 0%, #0a4d33 55%, #073624 100%);
+    border:10px solid var(--wood);
+    border-radius:26px;
+    padding:14px;
+    min-height:420px;
+    display:grid;
+    grid-template-rows:auto 1fr auto;
+    gap:8px;
+    box-shadow:inset 0 0 60px rgba(0,0,0,0.45), 0 20px 40px rgba(0,0,0,0.4);
+  }
+  .seat-strip{display:flex;justify-content:center;gap:6px;min-height:34px;align-items:center;flex-wrap:wrap;}
+  .seat-strip .opp{
+    display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;
+    background:rgba(0,0,0,0.28);font-size:12px;border:1px solid var(--line);
+  }
+  .seat-strip .opp.active{border-color:var(--gold-bright);box-shadow:0 0 0 2px rgba(227,194,115,0.25);}
+  .seat-strip .opp .count{background:var(--ivory);color:var(--ink);border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+
+  .board-area{
+    display:flex;align-items:center;justify-content:flex-start;
+    overflow-x:auto;padding:14px 8px;gap:4px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .board-empty{width:100%;text-align:center;color:rgba(246,241,228,0.5);font-size:13px;font-style:italic;}
+
+  .my-area{
+    background:rgba(0,0,0,0.22);border-radius:16px;padding:10px;
+    border:1px solid var(--line);
+  }
+  .my-area .who{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px;color:var(--ivory-dim);}
+  .my-area .who strong{color:var(--gold-bright);}
+  .hand-row{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;-webkit-overflow-scrolling:touch;}
+
+  /* domino tile */
+  .tile{
+    flex:none;background:linear-gradient(180deg,#fffdf8,var(--ivory));
+    border-radius:8px;border:1px solid #cfc4a5;
+    box-shadow:0 3px 6px rgba(0,0,0,0.35);
+    cursor:pointer;position:relative;
+    transition:transform .1s ease, box-shadow .1s ease;
+  }
+  .tile.vert{width:52px;height:100px;display:flex;flex-direction:column;}
+  .tile.horiz{width:100px;height:52px;display:flex;}
+  .tile .half{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:6px;gap:2px;}
+  .tile.vert .half:first-child{border-bottom:2px solid #b9ab86;}
+  .tile.horiz .half:first-child{border-right:2px solid #b9ab86;}
+  .dot{width:100%;height:100%;border-radius:50%;background:var(--ink);opacity:0;align-self:center;justify-self:center;}
+  .dot.on{opacity:1;}
+  .tile.playable:hover{transform:translateY(-6px);box-shadow:0 10px 16px rgba(0,0,0,0.4);}
+  .tile.playable{outline:2px solid var(--gold-bright);}
+  .tile.selected{transform:translateY(-10px);box-shadow:0 12px 18px rgba(0,0,0,0.5);outline:2px solid var(--team-a);}
+  .tile.unplayable{opacity:.55;cursor:default;}
+  .tile.back{background:linear-gradient(135deg,#5a3820,#7a4f2c);}
+  .tile.mini{width:30px;height:56px;}
+
+  .controls-row{display:flex;gap:10px;justify-content:center;padding:2px 4px 4px;flex-wrap:wrap;}
+  .controls-row .btn{width:auto;margin-top:0;padding:10px 18px;}
+
+  .turn-banner{
+    text-align:center;font-size:13px;padding:8px;border-radius:10px;margin-bottom:10px;
+    background:rgba(201,162,75,0.12);border:1px solid rgba(201,162,75,0.35);color:var(--gold-bright);
+  }
+  .turn-banner.mine{background:rgba(217,142,60,0.22);border-color:var(--team-a);color:#ffd9a0;font-weight:700;}
+
+  .log-box{
+    margin-top:14px;background:rgba(0,0,0,0.22);border-radius:12px;border:1px solid var(--line);
+    padding:10px 14px;font-size:12px;color:var(--ivory-dim);max-height:110px;overflow-y:auto;
+  }
+  .log-box div{padding:2px 0;}
+
+  /* end / modal overlays */
+  .overlay{
+    position:fixed;inset:0;background:rgba(4,10,7,0.72);display:flex;align-items:center;justify-content:center;
+    padding:20px;z-index:50;
+  }
+  .modal{
+    background:linear-gradient(180deg,#0e5638,#083c27);
+    border:1px solid var(--gold);border-radius:18px;padding:28px;max-width:420px;width:100%;
+    box-shadow:0 30px 60px rgba(0,0,0,0.5);text-align:center;
+  }
+  .modal h2{font-size:24px;color:var(--gold-bright);margin-bottom:10px;}
+  .modal p{color:var(--ivory-dim);font-size:14px;line-height:1.6;margin-bottom:8px;}
+  .modal .big-score{font-family:'Fraunces',serif;font-size:38px;color:var(--ivory);margin:10px 0;}
+
+  .info-toggle{position:fixed;top:14px;right:14px;z-index:40;}
+  ::-webkit-scrollbar{height:8px;width:8px;}
+  ::-webkit-scrollbar-thumb{background:rgba(201,162,75,0.4);border-radius:8px;}
+
+  @media (max-width:480px){
+    .brand h1{font-size:32px;}
+    .tile.vert{width:42px;height:82px;}
+    .tile.horiz{width:82px;height:42px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== LANDING ===================== -->
+<div class="screen" id="screen-landing">
+  <div class="brand">
+    <div class="eyebrow">Domino Lakaz</div>
+    <h1>Four hands.<br>One <em>table</em>.</h1>
+    <p>Mauritian-style domino — teams of two seated across from each other, lowest double opens, and pips settle the score. Play with three friends on their own phones.</p>
+  </div>
+  <div class="domino-divider"><span class="pip-mini"></span><span class="pip-mini"></span><span class="pip-mini"></span></div>
+
+  <div class="card">
+    <h2>Start a table</h2>
+    <div class="sub">You'll get a 4-letter room code to share.</div>
+    <label for="create-name">Your name</label>
+    <input type="text" id="create-name" maxlength="16" placeholder="e.g. Kevin">
+    <button class="btn btn-gold" id="btn-create">Create room</button>
+    <div class="err" id="create-err"></div>
+  </div>
+
+  <div class="divider-or">OR</div>
+
+  <div class="card">
+    <h2>Join a table</h2>
+    <div class="sub">Ask your host for the room code.</div>
+    <label for="join-code">Room code</label>
+    <input type="text" id="join-code" maxlength="4" class="code-input" placeholder="ABCD">
+    <label for="join-name">Your name</label>
+    <input type="text" id="join-name" maxlength="16" placeholder="e.g. Priya">
+    <button class="btn btn-outline" id="btn-join">Join room</button>
+    <div class="err" id="join-err"></div>
+  </div>
+
+  <div class="footnote">Everyone must open the <strong>same link</strong> (host shares the full URL, not just the room code). On the same Wi‑Fi use <code id="share-url">http://your-ip:8000/mauritian-domino.html</code>. <span id="storage-mode"></span> Rejoining? If your browser remembers you, we'll drop you back in automatically.</div>
+</div>
+
+<!-- ===================== LOBBY ===================== -->
+<div class="screen hidden" id="screen-lobby">
+  <div class="brand" style="margin-top:8px;">
+    <div class="eyebrow">Waiting for players</div>
+    <h1 style="font-size:28px;">Table lobby</h1>
+  </div>
+  <div class="card">
+    <div class="roomcode-badge">
+      <div>
+        <div style="font-size:11px;color:var(--ivory-dim);text-transform:uppercase;letter-spacing:.1em;">Room code</div>
+        <div class="code" id="lobby-code">ABCD</div>
+      </div>
+    </div>
+    <div class="sub" style="text-align:center;margin-top:8px;">Share this code — need exactly 4 players.</div>
+    <div class="seat-list" id="lobby-seats"></div>
+    <div style="display:flex;gap:10px;">
+      <label style="margin:0;flex:1;">
+        Target score
+        <input type="text" id="lobby-target" value="101" style="margin-top:6px;">
+      </label>
+    </div>
+    <button class="btn btn-gold" id="btn-start" disabled>Waiting for players…</button>
+    <button class="btn btn-outline" id="btn-leave-lobby">Leave table</button>
+    <div class="err" id="lobby-err"></div>
+  </div>
+  <div class="footnote">Seats 1 &amp; 3 play as a team against seats 2 &amp; 4 (partners sit across the table). Any player can tap Start once all four have joined.</div>
+</div>
+
+<!-- ===================== GAME ===================== -->
+<div class="screen hidden" id="screen-game">
+  <div class="table-wrap">
+    <div class="topbar">
+      <div class="score-pill">
+        <div class="team"><span class="swatch a"></span><span id="score-a">0</span></div>
+        <div class="team"><span class="swatch b"></span><span id="score-b">0</span></div>
+        <span class="roomtag" id="game-target">to 101</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="roomtag" id="game-roomtag">Room ABCD · Round 1</span>
+        <button class="icon-btn" id="btn-rules">Rules</button>
+        <button class="icon-btn" id="btn-leave-game">Leave</button>
+      </div>
+    </div>
+
+    <div class="turn-banner" id="turn-banner">Loading table…</div>
+
+    <div class="table">
+      <div class="seat-strip" id="seat-strip-top"></div>
+      <div class="board-area" id="board-area">
+        <div class="board-empty">Table is empty — the lowest double opens the round.</div>
+      </div>
+      <div class="seat-strip" id="seat-strip-bottom-spacer" style="min-height:2px;"></div>
+    </div>
+
+    <div class="my-area">
+      <div class="who">Your hand — <strong id="my-name">You</strong></div>
+      <div class="hand-row" id="hand-row"></div>
+      <div class="controls-row" id="side-choice"></div>
+      <div class="controls-row">
+        <button class="btn btn-outline btn-small" id="btn-pass" disabled>Pass</button>
+      </div>
+    </div>
+
+    <div class="log-box" id="log-box"></div>
+  </div>
+</div>
+
+<!-- ===================== ROUND / MATCH END MODAL ===================== -->
+<div class="overlay hidden" id="overlay-end">
+  <div class="modal">
+    <h2 id="end-title">Round over</h2>
+    <p id="end-detail"></p>
+    <div class="big-score" id="end-score"></div>
+    <button class="btn btn-gold" id="btn-next-round">Deal next round</button>
+    <button class="btn btn-outline" id="btn-back-landing">Back to start</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="overlay-rules">
+  <div class="modal" style="text-align:left;">
+    <h2 style="text-align:center;">Mauritian house rules</h2>
+    <p><strong>Teams.</strong> Seats 1 &amp; 3 are partners, seats 2 &amp; 4 are partners, sitting across from one another.</p>
+    <p><strong>Deal.</strong> Double-six set with the double-blank removed (27 tiles), 6 tiles each. The 3 leftover tiles are set aside and never used.</p>
+    <p><strong>Opening.</strong> The first round is opened by whoever holds the lowest double in play — double-one if it was dealt, otherwise double-two, then three, four, five, six. From the next round on, the round's starter (the previous winner) may open with any tile.</p>
+    <p><strong>Play.</strong> Match either open end of the chain. If you can play, you must — passing is only allowed when you have no legal tile.</p>
+    <p><strong>Domino.</strong> First player to empty their hand wins the round for their team; the losing team adds up the pips left in their own hands as penalty points.</p>
+    <p><strong>Capicú.</strong> If the winning domino matches <em>both</em> open ends of the chain — e.g. a 3 on one side and a 5 on the other, and the last tile played is [3|5] — the losing team's penalty is doubled.</p>
+    <p><strong>Blocked.</strong> If all four pass in a row, the team with fewer pips wins; the losing team adds up the pips left in their hands. Tie on pips means no points.</p>
+    <p><strong>Match.</strong> Points are penalties — the first team to reach 101 loses the match.</p>
+    <button class="btn btn-outline" id="btn-close-rules">Close</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- Storage adapter ----------------
+  // Shared room data (shared=true) goes to the Node server when served over
+  // http/https so phones on the same network can join the same room code.
+  // Personal session (shared=false) stays in this browser's localStorage.
+  // Opening the file directly (file://) falls back to localStorage for
+  // everything — multiplayer only works across tabs of the same browser.
+  if(!window.storage){
+    const PREFIX = "dominoLakaz:store:";
+    const useServer = location.protocol === "http:" || location.protocol === "https:";
+
+    async function storeGet(fullKey){
+      const res = await fetch("/api/storage/" + encodeURIComponent(fullKey));
+      if(!res.ok) return null;
+      return await res.json();
+    }
+    async function storeSet(fullKey, value){
+      const res = await fetch("/api/storage/" + encodeURIComponent(fullKey), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ value })
+      });
+      return res.ok;
+    }
+    async function storeDelete(fullKey){
+      const res = await fetch("/api/storage/" + encodeURIComponent(fullKey), { method: "DELETE" });
+      return res.ok;
+    }
+
+    window.storage = {
+      async get(key, shared){
+        const fullKey = PREFIX + key;
+        if(useServer && shared){
+          try{ return await storeGet(fullKey); }catch(e){ return null; }
+        }
+        try{
+          const raw = localStorage.getItem(fullKey);
+          return raw === null ? null : { value: raw };
+        }catch(e){ return null; }
+      },
+      async set(key, value, shared){
+        const fullKey = PREFIX + key;
+        if(useServer && shared){
+          try{ return await storeSet(fullKey, value); }catch(e){ return false; }
+        }
+        try{ localStorage.setItem(fullKey, value); return true; }
+        catch(e){ return false; }
+      },
+      async delete(key, shared){
+        const fullKey = PREFIX + key;
+        if(useServer && shared){
+          try{ return await storeDelete(fullKey); }catch(e){ return false; }
+        }
+        try{ localStorage.removeItem(fullKey); return true; }
+        catch(e){ return false; }
+      }
+    };
+  }
+
+  // ---------------- Persistent-ish session (personal storage) ----------------
+  const SESSION_KEY = "dominoLakaz:session";
+  let session = null; // {code, seat, name}
+
+  // ---------------- In-memory state ----------------
+  let room = null;       // last fetched room object
+  let pollTimer = null;
+  let selectedTileIdx = null; // index into myHand array currently selected (needs side choice)
+
+  const $ = (id) => document.getElementById(id);
+
+  function show(screenId){
+    ["screen-landing","screen-lobby","screen-game"].forEach(id=>{
+      $(id).classList.toggle("hidden", id !== screenId);
+    });
+  }
+
+  // ---------------- Deck / tile helpers ----------------
+  function fullDeck(){
+    const d = [];
+    // Mauritian rules: the double-blank [0,0] is not used.
+    for(let a=0;a<=6;a++) for(let b=a;b<=6;b++){ if(a===0&&b===0) continue; d.push([a,b]); }
+    return d; // 27 tiles
+  }
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+  function tileEq(t1,t2){ return t1[0]===t2[0] && t1[1]===t2[1]; }
+  function pipSum(tile){ return tile[0]+tile[1]; }
+
+  function seatHand(r, seat){
+    // dealt 6 tiles for seat, minus any already played by that seat
+    const dealt = r.deck.slice(seat*6, seat*6+6);
+    const played = r.board.filter(b=>b.seat===seat).map(b=>b.tile);
+    return dealt.filter(t => !played.some(p=>tileEq(p,t)));
+  }
+  function handPips(r, seat){
+    return seatHand(r, seat).reduce((s,t)=>s+pipSum(t),0);
+  }
+  function boardEnds(r){
+    if(r.board.length===0) return null;
+    return { left: r.board[0].leftVal, right: r.board[r.board.length-1].rightVal };
+  }
+
+  // ---------------- Room code / id ----------------
+  function genCode(){
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let c = "";
+    for(let i=0;i<4;i++) c += chars[Math.floor(Math.random()*chars.length)];
+    return c;
+  }
+
+  async function saveSession(s){
+    session = s;
+    try{ await window.storage.set(SESSION_KEY, JSON.stringify(s), false); }catch(e){}
+  }
+  async function loadSession(){
+    try{
+      const res = await window.storage.get(SESSION_KEY, false);
+      if(res && res.value) return JSON.parse(res.value);
+    }catch(e){}
+    return null;
+  }
+  async function clearSession(){
+    session = null;
+    try{ await window.storage.delete(SESSION_KEY, false); }catch(e){}
+  }
+
+  async function getRoom(code){
+    try{
+      const res = await window.storage.get("room:"+code, true);
+      if(res && res.value) return JSON.parse(res.value);
+    }catch(e){}
+    return null;
+  }
+  async function setRoom(code, obj){
+    obj.lastUpdated = Date.now();
+    try{
+      return !!(await window.storage.set("room:"+code, JSON.stringify(obj), true));
+    }catch(e){ return false; }
+  }
+
+  function newRoomState(code, hostName){
+    return {
+      code,
+      status: "waiting", // waiting | playing | roundEnd | matchEnd
+      players: [{seat:0, name: hostName}],
+      targetScore: 101,
+      deck: [],
+      board: [], // {seat, tile:[a,b], leftVal, rightVal}
+      turnSeat: 0,
+      passStreak: 0,
+      scores: [0,0], // team A (seats 0,2), team B (seats 1,3)
+      roundNum: 1,
+      roundStarterSeat: null,
+      openReq: null, // required opening tile ([d,d] on round 1, null = any)
+      nextStarter: null, // who opens the next round
+      lastRoundResult: null,
+      log: ["Table created."],
+      lastUpdated: Date.now()
+    };
+  }
+
+  function pushLog(r, msg){
+    r.log = r.log || [];
+    r.log.push(msg);
+    if(r.log.length > 40) r.log = r.log.slice(-40);
+  }
+
+  // ---------------- Landing actions ----------------
+  $("btn-create").addEventListener("click", async ()=>{
+    const name = $("create-name").value.trim();
+    $("create-err").textContent = "";
+    if(!name){ $("create-err").textContent = "Enter your name."; return; }
+    $("btn-create").disabled = true;
+    let code, existing;
+    do{
+      code = genCode();
+      existing = await getRoom(code);
+    }while(existing);
+    const r = newRoomState(code, name);
+    const ok = await setRoom(code, r);
+    $("btn-create").disabled = false;
+    if(!ok){ $("create-err").textContent = "Couldn't create room, try again."; return; }
+    await saveSession({code, seat:0, name});
+    enterLobby(code);
+  });
+
+  $("btn-join").addEventListener("click", async ()=>{
+    const code = $("join-code").value.trim().toUpperCase();
+    const name = $("join-name").value.trim();
+    $("join-err").textContent = "";
+    if(code.length!==4){ $("join-err").textContent = "Enter the 4-letter room code."; return; }
+    if(!name){ $("join-err").textContent = "Enter your name."; return; }
+    $("btn-join").disabled = true;
+    const result = await joinRoom(code, name);
+    $("btn-join").disabled = false;
+    if(typeof result !== "number"){
+      const msgs = {
+        not_found: "No table found with that code. Check the code and make sure everyone opened the same link (same URL, not just the 4 letters).",
+        started: "That table has already started — only players already seated can rejoin (use the same name).",
+        full: "That table is full (4 players already).",
+        busy: "Couldn't grab a seat just now — try again in a moment."
+      };
+      $("join-err").textContent = msgs[result] || "Couldn't join — try again.";
+      return;
+    }
+    await saveSession({code, seat: result, name});
+    const joined = await getRoom(code);
+    if(joined && joined.status !== "waiting") enterGame(code);
+    else enterLobby(code);
+  });
+
+  async function joinRoom(code, name){
+    for(let attempt=0; attempt<4; attempt++){
+      const r = await getRoom(code);
+      if(!r) return "not_found";
+      // Rejoin with the same name even if the game already started
+      const already = r.players.find(p=>p.name.toLowerCase()===name.toLowerCase());
+      if(already) return already.seat;
+      if(r.status !== "waiting") return "started";
+      if(r.players.length >= 4) return "full";
+      const takenSeats = r.players.map(p=>p.seat);
+      let seat = 0;
+      while(takenSeats.includes(seat) && seat<4) seat++;
+      if(seat>=4) return "full";
+      r.players.push({seat, name});
+      pushLog(r, name + " joined the table.");
+      await setRoom(code, r);
+      // verify no collision
+      const check = await getRoom(code);
+      const mine = check.players.filter(p=>p.seat===seat);
+      if(mine.length===1 && mine[0].name===name) return seat;
+      // collision, retry
+    }
+    return "busy";
+  }
+
+  // ---------------- Lobby ----------------
+  function enterLobby(code){
+    $("lobby-code").textContent = code;
+    show("screen-lobby");
+    startPolling(code, renderLobby);
+  }
+
+  async function renderLobby(r){
+    if(!r) return;
+    if(r.status === "playing" || r.status === "roundEnd" || r.status === "matchEnd"){
+      enterGame(r.code);
+      return;
+    }
+    const seatsBox = $("lobby-seats");
+    seatsBox.innerHTML = "";
+    for(let s=0;s<4;s++){
+      const p = r.players.find(pl=>pl.seat===s);
+      const team = (s%2===0) ? "team-a" : "team-b";
+      const row = document.createElement("div");
+      row.className = "seat-row " + (p? "filled "+team : "");
+      row.innerHTML = `<span class="seat-dot"></span>
+        <span class="name">${p ? escapeHtml(p.name) : "Empty seat "+(s+1)}</span>
+        <span class="tag">${p ? (s%2===0?"Team Gold":"Team Teal") + (s===0?" · Host":"") : ""}</span>`;
+      seatsBox.appendChild(row);
+    }
+    $("lobby-target").value = r.targetScore;
+    const full = r.players.length === 4;
+    $("btn-start").disabled = !full;
+    $("btn-start").textContent = full ? "Start game" : `Waiting for players… (${r.players.length}/4)`;
+  }
+
+  $("lobby-target").addEventListener("change", async ()=>{
+    if(!session) return;
+    const r = await getRoom(session.code);
+    if(!r || r.status!=="waiting") return;
+    let v = parseInt($("lobby-target").value,10);
+    if(isNaN(v) || v<10) v = 101;
+    r.targetScore = v;
+    await setRoom(session.code, r);
+  });
+
+  $("btn-start").addEventListener("click", async ()=>{
+    if(!session) return;
+    $("btn-start").disabled = true;
+    const r = await getRoom(session.code);
+    if(!r || r.players.length!==4){ $("btn-start").disabled=false; return; }
+    dealNewRound(r, null);
+    r.status = "playing";
+    pushLog(r, "Game started — round 1.");
+    await setRoom(session.code, r);
+  });
+
+  $("btn-leave-lobby").addEventListener("click", async ()=>{
+    stopPolling();
+    await clearSession();
+    show("screen-landing");
+  });
+
+  // ---------------- Dealing ----------------
+  function dealNewRound(r, starterSeatOverride){
+    // 4 players x 6 tiles = 24 dealt; the remaining 3 tiles are set aside
+    // and never used.
+    const deck = shuffle(fullDeck());
+    r.deck = deck;
+    r.board = [];
+    r.passStreak = 0;
+    r.lastRoundResult = null;
+
+    if(r.roundNum === 1){
+      // First round of a match: opened by the holder of the LOWEST double that
+      // was actually dealt. Try [1,1] first, then [2,2] ... [6,6]; a couple of
+      // doubles may be hidden in the 3 set-aside tiles, but with 6 doubles and
+      // only 3 tiles set aside at least three doubles are always in play.
+      let starter = 0, openReq = null;
+      for(let d=1; d<=6 && !openReq; d++){
+        for(let s=0; s<4; s++){
+          const hand = deck.slice(s*6, s*6+6);
+          if(hand.some(t=>t[0]===d && t[1]===d)){ starter = s; openReq = [d,d]; break; }
+        }
+      }
+      r.roundStarterSeat = starter;
+      r.turnSeat = starter;
+      r.openReq = openReq; // opener must play exactly this double
+    } else {
+      // Later rounds: the previous round's winner opens with ANY tile.
+      const starter = (starterSeatOverride !== null && starterSeatOverride !== undefined)
+        ? starterSeatOverride : (r.roundStarterSeat || 0);
+      r.roundStarterSeat = starter;
+      r.turnSeat = starter;
+      r.openReq = null; // any tile may open the round
+    }
+    r.status = "playing";
+  }
+
+  // ---------------- Game screen ----------------
+  function enterGame(code){
+    show("screen-game");
+    startPolling(code, renderGame);
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  function pipGridHtml(n){
+    const positions = {
+      0: [], 1:[4], 2:[0,8], 3:[0,4,8], 4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8]
+    }[n] || [];
+    let html = "";
+    for(let i=0;i<9;i++){
+      html += `<span class="dot ${positions.includes(i)?"on":""}"></span>`;
+    }
+    return html;
+  }
+
+  function tileHtml(tile, orientation, extraClass){
+    const [a,b] = tile;
+    if(orientation==="vert"){
+      return `<div class="tile vert ${extraClass||''}">
+        <div class="half">${pipGridHtml(a)}</div>
+        <div class="half">${pipGridHtml(b)}</div>
+      </div>`;
+    } else {
+      return `<div class="tile horiz ${extraClass||''}">
+        <div class="half">${pipGridHtml(a)}</div>
+        <div class="half">${pipGridHtml(b)}</div>
+      </div>`;
+    }
+  }
+
+  function canPlayTile(tile, ends, openReq){
+    if(!ends){
+      if(!openReq) return true;               // any tile may open this round
+      return tile[0]===openReq[0] && tile[1]===openReq[1]; // must be this double
+    }
+    const sides = [];
+    if(tile[0]===ends.left || tile[1]===ends.left) sides.push("left");
+    if(tile[0]===ends.right || tile[1]===ends.right) sides.push("right");
+    return sides;
+  }
+
+  async function renderGame(r){
+    if(!r || !session) return;
+    if(r.status === "waiting"){ enterLobby(r.code); return; }
+
+    const mySeat = session.seat;
+    $("game-roomtag").textContent = `Room ${r.code} · Round ${r.roundNum}`;
+    $("game-target").textContent = `to ${r.targetScore}`;
+    $("score-a").textContent = r.scores[0];
+    $("score-b").textContent = r.scores[1];
+    $("my-name").textContent = session.name;
+
+    // opponents strip (seats other than mine), ordered: right, partner, left
+    const order = [ (mySeat+1)%4, (mySeat+2)%4, (mySeat+3)%4 ];
+    const strip = $("seat-strip-top");
+    strip.innerHTML = "";
+    order.forEach(s=>{
+      const p = r.players.find(pl=>pl.seat===s);
+      const count = seatHand(r, s).length;
+      const active = r.turnSeat === s;
+      const rel = s === (mySeat+2)%4 ? "Partner" : "Opponent";
+      const el = document.createElement("div");
+      el.className = "opp" + (active?" active":"");
+      el.innerHTML = `<span>${p?escapeHtml(p.name):"—"}</span><span style="opacity:.6;font-size:10px;">${rel}</span><span class="count">${count}</span>`;
+      strip.appendChild(el);
+    });
+
+    // board
+    const boardArea = $("board-area");
+    if(r.board.length===0){
+      boardArea.innerHTML = `<div class="board-empty">${r.openReq ? `Table is empty — double-${r.openReq[0]} opens the round.` : "Table is empty — the opener may lay any tile."}</div>`;
+    } else {
+      boardArea.innerHTML = r.board.map(b=>{
+        const p = r.players.find(pl=>pl.seat===b.seat);
+        const initials = p ? p.name.slice(0,1).toUpperCase() : "?";
+        return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:none;">
+          ${tileHtml(b.tile, "horiz")}
+          <span style="font-size:9px;opacity:.55;">${initials}</span>
+        </div>`;
+      }).join("");
+      boardArea.scrollLeft = boardArea.scrollWidth;
+    }
+
+    // turn banner
+    const ends = boardEnds(r);
+    const myTurn = r.turnSeat === mySeat && r.status === "playing";
+    const turnPlayer = r.players.find(pl=>pl.seat===r.turnSeat);
+    const banner = $("turn-banner");
+    if(r.status === "playing"){
+      banner.className = "turn-banner" + (myTurn? " mine":"");
+      banner.textContent = myTurn ? "Your move — pick a tile below." : `Waiting on ${turnPlayer?turnPlayer.name:"…"}…`;
+    } else {
+      banner.className = "turn-banner";
+      banner.textContent = "Round finished.";
+    }
+
+    // my hand
+    const myHand = seatHand(r, mySeat);
+    const handRow = $("hand-row");
+    handRow.innerHTML = "";
+    let anyPlayable = false;
+    myHand.forEach((tile, idx)=>{
+      const sides = canPlayTile(tile, ends, r.openReq);
+      const playable = myTurn && sides && (Array.isArray(sides) ? sides.length>0 : sides===true);
+      if(playable) anyPlayable = true;
+      const wrap = document.createElement("div");
+      const cls = ["tile","vert"];
+      if(playable) cls.push("playable"); else if(myTurn) cls.push("unplayable");
+      if(selectedTileIdx===idx) cls.push("selected");
+      wrap.innerHTML = tileHtml(tile, "vert", cls.filter(c=>c!=="tile"&&c!=="vert").join(" "));
+      const tileEl = wrap.firstElementChild;
+      if(playable){
+        tileEl.addEventListener("click", ()=> onTileClick(r, tile, sides));
+      }
+      handRow.appendChild(tileEl);
+    });
+
+    // pass button: enabled only if my turn and truly no playable tile
+    $("btn-pass").disabled = !(myTurn && !anyPlayable);
+    if(!myTurn) $("side-choice").innerHTML = "";
+
+    // log
+    const logBox = $("log-box");
+    logBox.innerHTML = (r.log||[]).slice(-12).map(l=>`<div>${escapeHtml(l)}</div>`).join("");
+    logBox.scrollTop = logBox.scrollHeight;
+
+    // round / match end
+    if(r.status === "roundEnd" || r.status === "matchEnd"){
+      showEndOverlay(r);
+    } else {
+      $("overlay-end").classList.add("hidden");
+    }
+  }
+
+  async function onTileClick(r, tile, sides){
+    const mySeat = session.seat;
+    const ends = boardEnds(r);
+    if(!ends){
+      // opening move (round 1 = the required double, later rounds = any tile), single placement
+      await commitPlay(tile, "first");
+      return;
+    }
+    if(sides.length === 1){
+      await commitPlay(tile, sides[0]);
+    } else {
+      // both sides possible — show choice buttons
+      renderSideChoice(tile);
+    }
+  }
+
+  function renderSideChoice(tile){
+    const box = $("side-choice");
+    box.innerHTML = `
+      <button class="btn btn-outline btn-small" data-side="left">Play left</button>
+      <button class="btn btn-outline btn-small" data-side="right">Play right</button>
+      <button class="btn btn-danger btn-small" data-side="cancel">Cancel</button>
+    `;
+    box.querySelectorAll("button").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const side = btn.getAttribute("data-side");
+        box.innerHTML = "";
+        if(side==="cancel") return;
+        await commitPlay(tile, side);
+      });
+    });
+  }
+
+  async function commitPlay(tile, side){
+    if(!session) return;
+    const r = await getRoom(session.code);
+    if(!r || r.status!=="playing" || r.turnSeat !== session.seat) return;
+    const ends = boardEnds(r);
+    const entry = { seat: session.seat, tile: tile.slice() };
+
+    if(side==="first"){
+      entry.leftVal = tile[0];
+      entry.rightVal = tile[1];
+      r.board = [entry];
+    } else if(side==="left"){
+      const matchVal = ends.left;
+      const other = (tile[0]===matchVal) ? tile[1] : tile[0];
+      entry.leftVal = other;
+      entry.rightVal = matchVal;
+      r.board = [entry, ...r.board];
+    } else { // right
+      const matchVal = ends.right;
+      const other = (tile[0]===matchVal) ? tile[1] : tile[0];
+      entry.leftVal = matchVal;
+      entry.rightVal = other;
+      r.board = [...r.board, entry];
+    }
+
+    r.passStreak = 0;
+    const p = r.players.find(pl=>pl.seat===session.seat);
+    pushLog(r, `${p?p.name:"Player"} played [${tile[0]}|${tile[1]}].`);
+
+    // check domino
+    const remaining = seatHand(r, session.seat).length; // after this play, seatHand recomputes from board
+    if(remaining === 0){
+      // "Capicú": the winning tile matched BOTH open ends (it could have been
+      // laid on either side). When that happens the opponents' pips count double.
+      const capicu = !!(ends &&
+        (tile[0]===ends.left || tile[1]===ends.left) &&
+        (tile[0]===ends.right || tile[1]===ends.right));
+      finishRound(r, "domino", session.seat, capicu);
+    } else {
+      r.turnSeat = (session.seat + 1) % 4;
+    }
+    selectedTileIdx = null;
+    await setRoom(session.code, r);
+  }
+
+  $("btn-pass").addEventListener("click", async ()=>{
+    if(!session) return;
+    const r = await getRoom(session.code);
+    if(!r || r.status!=="playing" || r.turnSeat !== session.seat) return;
+    const p = r.players.find(pl=>pl.seat===session.seat);
+    pushLog(r, `${p?p.name:"Player"} passed.`);
+    r.passStreak = (r.passStreak||0) + 1;
+    if(r.passStreak >= 4){
+      finishRound(r, "blocked", null);
+    } else {
+      r.turnSeat = (session.seat + 1) % 4;
+    }
+    await setRoom(session.code, r);
+  });
+
+  function finishRound(r, reason, winningSeat, capicu){
+    // Mauritian scoring: points are penalties. The LOSING team adds up the
+    // pips left in its own hands, and the first team to reach the target LOSES.
+    const pips = [0,0,0,0].map((_,s)=>handPips(r,s));
+    const teamPips = [pips[0]+pips[2], pips[1]+pips[3]];
+    let winningTeam, losingTeam, penalty;
+    if(reason === "domino"){
+      winningTeam = winningSeat % 2; // 0 -> team Gold, 1 -> team Teal
+      losingTeam = 1 - winningTeam;
+      penalty = teamPips[losingTeam];
+      if(capicu) penalty *= 2; // capicú: winning tile matched both ends → double
+      r.scores[losingTeam] += penalty;
+      const p = r.players.find(pl=>pl.seat===winningSeat);
+      pushLog(r, `${p?p.name:"A player"} dominoed${capicu?" on both ends (capicú — doubled)":""}! Team ${losingTeam===0?"Gold":"Teal"} takes ${penalty} points.`);
+      r.lastRoundResult = { reason, winningTeam, losingTeam, penalty, winningSeat, capicu: !!capicu };
+    } else {
+      if(teamPips[0] === teamPips[1]){
+        winningTeam = null; losingTeam = null; penalty = 0;
+        pushLog(r, `Blocked round — tied on pips, no points.`);
+        r.lastRoundResult = { reason, winningTeam: null, losingTeam: null, penalty: 0, winningSeat: null };
+      } else {
+        losingTeam = teamPips[0] > teamPips[1] ? 0 : 1; // more pips = loser
+        winningTeam = 1 - losingTeam;
+        penalty = teamPips[losingTeam];
+        r.scores[losingTeam] += penalty;
+        pushLog(r, `Blocked round — Team ${losingTeam===0?"Gold":"Teal"} had more pips, takes ${penalty} points.`);
+        r.lastRoundResult = { reason, winningTeam, losingTeam, penalty, winningSeat: null };
+      }
+    }
+
+    // Who opens the next round (they may lay any tile, since it isn't round 1):
+    // the player who dominoed, or — on a block — the winning team's seat. On a
+    // pip tie, whoever opened this round opens again.
+    if(reason === "domino") r.nextStarter = winningSeat;
+    else if(winningTeam !== null) r.nextStarter = (r.roundStarterSeat % 2 === winningTeam) ? r.roundStarterSeat : (r.roundStarterSeat + 1) % 4;
+    else r.nextStarter = r.roundStarterSeat;
+
+    if(r.scores[0] >= r.targetScore || r.scores[1] >= r.targetScore){
+      r.status = "matchEnd";
+    } else {
+      r.status = "roundEnd";
+    }
+  }
+
+  function showEndOverlay(r){
+    const overlay = $("overlay-end");
+    overlay.classList.remove("hidden");
+    const result = r.lastRoundResult || {};
+    if(r.status === "matchEnd"){
+      // points are penalties — the team with FEWER points wins
+      const winTeam = r.scores[0] <= r.scores[1] ? 0 : 1;
+      const loseTeam = 1 - winTeam;
+      $("end-title").textContent = "Match over!";
+      $("end-detail").textContent = `Team ${loseTeam===0?"Gold":"Teal"} hit ${r.targetScore} first and loses. Team ${winTeam===0?"Gold":"Teal"} wins the table, ${r.scores[0]} – ${r.scores[1]}.`;
+      $("end-score").textContent = `${r.scores[0]} – ${r.scores[1]}`;
+      $("btn-next-round").textContent = "Start a new match";
+    } else {
+      $("end-title").textContent = `Round ${r.roundNum} complete`;
+      if(result.reason === "domino"){
+        const p = r.players.find(pl=>pl.seat===result.winningSeat);
+        $("end-detail").textContent = `${p?p.name:"A player"} dominoed${result.capicu?" on both ends — capicú, points doubled":""} for Team ${result.winningTeam===0?"Gold":"Teal"}. Team ${result.losingTeam===0?"Gold":"Teal"} takes +${result.penalty} points.`;
+      } else if(result.losingTeam===null || result.losingTeam===undefined){
+        $("end-detail").textContent = "Table blocked — tied on pips, no points.";
+      } else {
+        $("end-detail").textContent = `Table blocked — Team ${result.losingTeam===0?"Gold":"Teal"} had more pips, takes +${result.penalty} points.`;
+      }
+      $("end-score").textContent = `${r.scores[0]} – ${r.scores[1]}`;
+      $("btn-next-round").textContent = "Deal next round";
+    }
+  }
+
+  $("btn-next-round").addEventListener("click", async ()=>{
+    if(!session) return;
+    const r = await getRoom(session.code);
+    if(!r) return;
+    if(r.status === "matchEnd"){
+      r.scores = [0,0];
+      r.roundNum = 1;
+      dealNewRound(r, null);
+      pushLog(r, "New match started.");
+    } else {
+      r.roundNum += 1;
+      dealNewRound(r, r.nextStarter); // later rounds: previous winner opens with any tile
+      pushLog(r, `Round ${r.roundNum} dealt.`);
+    }
+    await setRoom(session.code, r);
+    $("overlay-end").classList.add("hidden");
+  });
+
+  $("btn-back-landing").addEventListener("click", async ()=>{
+    stopPolling();
+    await clearSession();
+    $("overlay-end").classList.add("hidden");
+    show("screen-landing");
+  });
+
+  $("btn-leave-game").addEventListener("click", async ()=>{
+    stopPolling();
+    await clearSession();
+    show("screen-landing");
+  });
+
+  $("btn-rules").addEventListener("click", ()=> $("overlay-rules").classList.remove("hidden"));
+  $("btn-close-rules").addEventListener("click", ()=> $("overlay-rules").classList.add("hidden"));
+
+  // ---------------- Polling ----------------
+  function startPolling(code, renderFn){
+    stopPolling();
+    const tick = async ()=>{
+      const r = await getRoom(code);
+      room = r;
+      if(r) renderFn(r);
+    };
+    tick();
+    pollTimer = setInterval(tick, 1500);
+  }
+  function stopPolling(){
+    if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  // ---------------- Boot ----------------
+  (async function boot(){
+    const shareEl = $("share-url");
+    const modeEl = $("storage-mode");
+    const onServer = location.protocol === "http:" || location.protocol === "https:";
+    if(shareEl && onServer){
+      shareEl.textContent = location.origin + location.pathname;
+    }
+    if(modeEl){
+      if(onServer){
+        modeEl.textContent = "Network tables enabled — room codes work across phones on this link.";
+        modeEl.style.color = "var(--gold-bright)";
+      } else {
+        modeEl.textContent = "Opened as a local file — room codes only work in other tabs of this same browser. Run: node server.js";
+        modeEl.style.color = "#e8a090";
+      }
+    }
+
+    const s = await loadSession();
+    if(s && s.code){
+      session = s;
+      const r = await getRoom(s.code);
+      if(r && r.players.some(p=>p.seat===s.seat && p.name.toLowerCase()===s.name.toLowerCase())){
+        if(r.status === "waiting") enterLobby(s.code);
+        else enterGame(s.code);
+        return;
+      } else {
+        await clearSession();
+      }
+    }
+    show("screen-landing");
+  })();
+
+})();
+</script>
+</body>
+</html>
