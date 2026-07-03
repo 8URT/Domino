@@ -1,0 +1,12 @@
+{
+  "name": "domino-lakaz",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mauritian 4-player domino — web client + shared room server",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

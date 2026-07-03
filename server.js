@@ -27,6 +27,9 @@ function send(res, status, body, type){
   res.writeHead(status, {
     "Content-Type": type || "text/plain; charset=utf-8",
     "Cache-Control": "no-store",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
   });
   res.end(body);
 }
@@ -47,9 +50,15 @@ function readBody(req){
 const server = http.createServer(async (req, res)=>{
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
+  if(req.method === "OPTIONS"){
+    send(res, 204, "");
+    return;
+  }
+
   // Shared key-value API (matches window.storage shim in the HTML)
   if(url.pathname.startsWith("/api/storage/")){
     const key = decodeURIComponent(url.pathname.slice("/api/storage/".length));
+    if(key === "_health"){ sendJson(res, 200, { ok: true }); return; }
     if(!key){ send(res, 400, "Missing key"); return; }
 
     if(req.method === "GET"){
@@ -82,7 +91,7 @@ const server = http.createServer(async (req, res)=>{
   }
 
   // Static files
-  let filePath = url.pathname === "/" ? "/mauritian-domino.html" : url.pathname;
+  let filePath = url.pathname === "/" ? "/index.html" : url.pathname;
   filePath = path.normalize(filePath).replace(/^(\.\.[/\\])+/, "");
   const abs = path.join(ROOT, filePath);
   if(!abs.startsWith(ROOT)){ send(res, 403, "Forbidden"); return; }

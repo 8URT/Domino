@@ -366,15 +366,29 @@
   // everything — multiplayer only works across tabs of the same browser.
   if(!window.storage){
     const PREFIX = "dominoLakaz:store:";
-    const useServer = location.protocol === "http:" || location.protocol === "https:";
+    const onWeb = location.protocol === "http:" || location.protocol === "https:";
+    const apiBase = (new URLSearchParams(location.search).get("api") || location.origin).replace(/\/$/, "");
+    let sharedBackend = null;
+    let sharedBackendAt = 0;
+
+    async function useSharedBackend(){
+      if(!onWeb) return false;
+      if(sharedBackend !== null && Date.now() - sharedBackendAt < 30000) return sharedBackend;
+      try{
+        const res = await fetch(apiBase + "/api/storage/_health", { cache: "no-store" });
+        sharedBackend = res.ok;
+      }catch(e){ sharedBackend = false; }
+      sharedBackendAt = Date.now();
+      return sharedBackend;
+    }
 
     async function storeGet(fullKey){
-      const res = await fetch("/api/storage/" + encodeURIComponent(fullKey));
+      const res = await fetch(apiBase + "/api/storage/" + encodeURIComponent(fullKey));
       if(!res.ok) return null;
       return await res.json();
     }
     async function storeSet(fullKey, value){
-      const res = await fetch("/api/storage/" + encodeURIComponent(fullKey), {
+      const res = await fetch(apiBase + "/api/storage/" + encodeURIComponent(fullKey), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ value })
@@ -382,14 +396,14 @@
       return res.ok;
     }
     async function storeDelete(fullKey){
-      const res = await fetch("/api/storage/" + encodeURIComponent(fullKey), { method: "DELETE" });
+      const res = await fetch(apiBase + "/api/storage/" + encodeURIComponent(fullKey), { method: "DELETE" });
       return res.ok;
     }
 
     window.storage = {
       async get(key, shared){
         const fullKey = PREFIX + key;
-        if(useServer && shared){
+        if(shared && await useSharedBackend()){
           try{ return await storeGet(fullKey); }catch(e){ return null; }
         }
         try{
@@ -399,7 +413,7 @@
       },
       async set(key, value, shared){
         const fullKey = PREFIX + key;
-        if(useServer && shared){
+        if(shared && await useSharedBackend()){
           try{ return await storeSet(fullKey, value); }catch(e){ return false; }
         }
         try{ localStorage.setItem(fullKey, value); return true; }
@@ -407,13 +421,14 @@
       },
       async delete(key, shared){
         const fullKey = PREFIX + key;
-        if(useServer && shared){
+        if(shared && await useSharedBackend()){
           try{ return await storeDelete(fullKey); }catch(e){ return false; }
         }
         try{ localStorage.removeItem(fullKey); return true; }
         catch(e){ return false; }
       }
     };
+    window.dominoLakazUseSharedBackend = useSharedBackend;
   }
 
   // ---------------- Persistent-ish session (personal storage) ----------------
@@ -1050,14 +1065,18 @@
   (async function boot(){
     const shareEl = $("share-url");
     const modeEl = $("storage-mode");
-    const onServer = location.protocol === "http:" || location.protocol === "https:";
-    if(shareEl && onServer){
-      shareEl.textContent = location.origin + location.pathname;
+    const onWeb = location.protocol === "http:" || location.protocol === "https:";
+    const hasBackend = onWeb && window.dominoLakazUseSharedBackend && await window.dominoLakazUseSharedBackend();
+    if(shareEl && onWeb){
+      shareEl.textContent = location.origin + location.pathname.replace(/\/[^/]*$/, "/") + "mauritian-domino.html";
     }
     if(modeEl){
-      if(onServer){
-        modeEl.textContent = "Network tables enabled — room codes work across phones on this link.";
+      if(hasBackend){
+        modeEl.textContent = "Live server connected — room codes work across phones on this link.";
         modeEl.style.color = "var(--gold-bright)";
+      } else if(onWeb){
+        modeEl.textContent = "No game server on this page — deploy with Render (see README) or run node server.js locally.";
+        modeEl.style.color = "#e8a090";
       } else {
         modeEl.textContent = "Opened as a local file — room codes only work in other tabs of this same browser. Run: node server.js";
         modeEl.style.color = "#e8a090";

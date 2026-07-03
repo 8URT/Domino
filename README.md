@@ -1,22 +1,37 @@
 # Domino Lakaz — Mauritian 4-Player Domino
 
-A single-file web app for 4-player Mauritian-rules domino, played across separate
-devices via room codes. Currently built as one self-contained HTML file
-(`mauritian-domino.html`) using the Claude.ai artifact `window.storage` API for
-state sync. This doc is a handoff for continuing development in a normal
-environment (Cursor, Node, a real backend, etc.).
+4-player Mauritian-rules domino for phones and browsers. Create a room code, share the link, play in teams of two.
+
+## Play online
+
+**Deploy the game server (free, ~2 minutes):**
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/8URT/Domino)
+
+1. Click **Deploy to Render** and connect your GitHub account.
+2. Click **Create Web Service** (free tier is fine).
+3. When deploy finishes, open your Render URL (e.g. `https://domino-lakaz.onrender.com`).
+4. Share that **full URL** with the other 3 players — everyone must use the same link, then join with the room code.
+
+**Run locally:**
+
+```bash
+git clone git@github.com:8URT/Domino.git
+cd Domino
+node server.js
+# open http://localhost:8000
+```
+
+**Repo:** https://github.com/8URT/Domino
 
 ---
 
 ## 1. Current state
 
-- **Single file**: `mauritian-domino.html` — HTML + CSS + vanilla JS, no build step.
-- **"Multiplayer"** is implemented via polling a key-value store every 1.5s
-  (`window.storage.get/set(key, value, shared)`), which **only exists inside
-  Claude.ai artifacts**. Outside that environment this store doesn't exist —
-  see §4 for what to replace it with.
-- Fully playable end-to-end: create/join room → lobby → deal → play → score →
-  next round → match end.
+- **Game client**: `mauritian-domino.html` — HTML + CSS + vanilla JS, no build step.
+- **Game server**: `server.js` — shared room storage so phones on the same URL can join room codes.
+- **Deploy**: `render.yaml` for one-click Render deploy; GitHub Actions publishes the repo to GitHub Pages (static mirror — use Render for live multiplayer).
+- Fully playable end-to-end: create/join room → lobby → deal → play → score → next round → match end.
 
 ---
 
