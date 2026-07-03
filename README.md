@@ -4,16 +4,26 @@
 
 ## Play online
 
-**Deploy the game server (free, ~2 minutes):**
+### Option A — Full game (recommended)
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/8URT/Domino)
 
-1. Click **Deploy to Render** and connect your GitHub account.
-2. Click **Create Web Service** (free tier is fine).
+1. Click **Deploy to Render** and connect GitHub.
+2. Click **Create Web Service** (free tier).
 3. When deploy finishes, open your Render URL (e.g. `https://domino-lakaz.onrender.com`).
-4. Share that **full URL** with the other 3 players — everyone must use the same link, then join with the room code.
+4. Share that **full URL** with the other 3 players.
 
-**Run locally:**
+### Option B — GitHub Pages (static mirror)
+
+After the latest push, enable Pages once:
+
+**Repo → Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `gh-pages` / `/ (root) → Save**
+
+Then open: **https://8urt.github.io/Domino/mauritian-domino.html**
+
+> GitHub Pages hosts the game files only — for cross-phone multiplayer, use **Option A (Render)** or run `node server.js` locally.
+
+### Option C — Local network
 
 ```bash
 git clone git@github.com:8URT/Domino.git
@@ -22,7 +32,7 @@ node server.js
 # open http://localhost:8000
 ```
 
-**Repo:** https://github.com/8URT/Domino
+**Repo:** https://github.com/8URT/Domino (public)
 
 ---
 
