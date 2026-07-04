@@ -790,7 +790,7 @@
         const p = r.players.find(pl=>pl.seat===b.seat);
         const initials = p ? p.name.slice(0,1).toUpperCase() : "?";
         return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:none;">
-          ${tileHtml(b.tile, "horiz")}
+          ${tileHtml([b.leftVal, b.rightVal], "horiz")}
           <span style="font-size:9px;opacity:.55;">${initials}</span>
         </div>`;
       }).join("");
