@@ -94,11 +94,20 @@
 
   /* ---------- Lobby ---------- */
   .roomcode-badge{
-    display:flex;align-items:center;justify-content:center;gap:10px;
+    display:flex;align-items:center;justify-content:center;gap:12px;
     background:rgba(0,0,0,0.25);border:1px dashed var(--gold);border-radius:12px;
     padding:14px;margin-bottom:6px;
   }
   .roomcode-badge .code{font-family:'Fraunces',serif;font-size:30px;letter-spacing:.24em;color:var(--gold-bright);font-weight:700;}
+  .btn-copy-code{
+    flex:none;display:inline-flex;align-items:center;justify-content:center;
+    width:40px;height:40px;border-radius:10px;border:1px solid var(--line);
+    background:rgba(255,255,255,0.06);color:var(--gold-bright);cursor:pointer;
+    transition:border-color .12s ease, background .12s ease, color .12s ease;
+  }
+  .btn-copy-code:hover{border-color:var(--gold);background:rgba(201,162,75,0.15);}
+  .btn-copy-code.copied{border-color:#6bc48a;color:#9ee6b8;}
+  .btn-copy-code svg{width:18px;height:18px;pointer-events:none;}
   .seat-list{display:flex;flex-direction:column;gap:8px;margin:16px 0;}
   .seat-row{
     display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;
@@ -231,8 +240,8 @@
 <div class="screen" id="screen-landing">
   <div class="brand">
     <div class="eyebrow">Domino Lakaz</div>
-    <h1>Four hands.<br>One <em>table</em>.</h1>
-    <p>Mauritian-style domino — teams of two seated across from each other, lowest double opens, and pips settle the score. Play with three friends on their own phones.</p>
+    <h1>Two or four hands.<br>One <em>table</em>.</h1>
+    <p>Mauritian-style domino — play head-to-head (9 tiles) or in teams of two (6 tiles). Lowest double opens, pips settle the score.</p>
   </div>
   <div class="domino-divider"><span class="pip-mini"></span><span class="pip-mini"></span><span class="pip-mini"></span></div>
 
@@ -241,6 +250,11 @@
     <div class="sub">You'll get a 4-letter room code to share.</div>
     <label for="create-name">Your name</label>
     <input type="text" id="create-name" maxlength="16" placeholder="e.g. Kevin">
+    <label for="create-mode">Table size</label>
+    <select id="create-mode" style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,0.2);color:var(--ivory);font-size:16px;font-family:'Work Sans',sans-serif;margin-bottom:4px;">
+      <option value="4">4 players · 6 tiles each (teams)</option>
+      <option value="2">2 players · 9 tiles each (head-to-head)</option>
+    </select>
     <button class="btn btn-gold" id="btn-create">Create room</button>
     <div class="err" id="create-err"></div>
   </div>
@@ -273,8 +287,14 @@
         <div style="font-size:11px;color:var(--ivory-dim);text-transform:uppercase;letter-spacing:.1em;">Room code</div>
         <div class="code" id="lobby-code">ABCD</div>
       </div>
+      <button type="button" class="btn-copy-code" id="btn-copy-code" title="Copy room code" aria-label="Copy room code">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="9" y="9" width="13" height="13" rx="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+      </button>
     </div>
-    <div class="sub" style="text-align:center;margin-top:8px;">Share this code — need exactly 4 players.</div>
+    <div class="sub" style="text-align:center;margin-top:8px;" id="lobby-need-players">Share this code — waiting for players.</div>
     <div class="seat-list" id="lobby-seats"></div>
     <div style="display:flex;gap:10px;">
       <label style="margin:0;flex:1;">
@@ -286,7 +306,7 @@
     <button class="btn btn-outline" id="btn-leave-lobby">Leave table</button>
     <div class="err" id="lobby-err"></div>
   </div>
-  <div class="footnote">Seats 1 &amp; 3 play as a team against seats 2 &amp; 4 (partners sit across the table). Any player can tap Start once all four have joined.</div>
+  <div class="footnote" id="lobby-footnote">Any player can tap Start once everyone has joined.</div>
 </div>
 
 <!-- ===================== GAME ===================== -->
@@ -342,14 +362,16 @@
 <div class="overlay hidden" id="overlay-rules">
   <div class="modal" style="text-align:left;">
     <h2 style="text-align:center;">Mauritian house rules</h2>
-    <p><strong>Teams.</strong> Seats 1 &amp; 3 are partners, seats 2 &amp; 4 are partners, sitting across from one another.</p>
-    <p><strong>Deal.</strong> Double-six set with the double-blank removed (27 tiles), 6 tiles each. The 3 leftover tiles are set aside and never used.</p>
-    <p><strong>Opening.</strong> The first round is opened by whoever holds the lowest double in play — double-one if it was dealt, otherwise double-two, then three, four, five, six. From the next round on, the round's starter (the previous winner) may open with any tile.</p>
-    <p><strong>Play.</strong> Match either open end of the chain. If you can play, you must — passing is only allowed when you have no legal tile.</p>
-    <p><strong>Domino.</strong> First player to empty their hand wins the round for their team; the losing team adds up the pips left in their own hands as penalty points.</p>
-    <p><strong>Capicú.</strong> If the winning domino matches <em>both</em> open ends of the chain — e.g. a 3 on one side and a 5 on the other, and the last tile played is [3|5] — the losing team's penalty is doubled.</p>
-    <p><strong>Blocked.</strong> If all four pass in a row, the team with fewer pips wins; the losing team adds up the pips left in their hands. Tie on pips means no points.</p>
-    <p><strong>Match.</strong> Points are penalties — the first team to reach 101 loses the match.</p>
+    <div id="rules-content">
+    <p><strong>4-player.</strong> Teams of two (seats 1 &amp; 3 vs 2 &amp; 4), 6 tiles each, 3 set aside.</p>
+    <p><strong>2-player.</strong> Head-to-head, 9 tiles each, 9 set aside.</p>
+    <p><strong>Opening.</strong> Round 1: lowest double in play opens (double-one, else two, three…). Later rounds: previous winner opens with any tile.</p>
+    <p><strong>Play.</strong> Match either open end. Must play if you can; pass only with no legal tile.</p>
+    <p><strong>Domino.</strong> Empty your hand to win the round; the loser adds their leftover pips as penalty points.</p>
+    <p><strong>Capicú.</strong> Winning tile matches both open ends — loser's penalty is doubled.</p>
+    <p><strong>Blocked.</strong> Everyone passes in a row — fewer pips wins; loser takes their pips. Tie = no score.</p>
+    <p><strong>Match.</strong> Penalty points — first side to reach 101 loses.</p>
+    </div>
     <button class="btn btn-outline" id="btn-close-rules">Close</button>
   </div>
 </div>
@@ -467,8 +489,9 @@
   function pipSum(tile){ return tile[0]+tile[1]; }
 
   function seatHand(r, seat){
-    // dealt 6 tiles for seat, minus any already played by that seat
-    const dealt = r.deck.slice(seat*6, seat*6+6);
+    // dealt tiles for seat, minus any already played by that seat
+    const n = tilesPerPlayer(r);
+    const dealt = r.deck.slice(seat*n, seat*n+n);
     const played = r.board.filter(b=>b.seat===seat).map(b=>b.tile);
     return dealt.filter(t => !played.some(p=>tileEq(p,t)));
   }
@@ -478,6 +501,20 @@
   function boardEnds(r){
     if(r.board.length===0) return null;
     return { left: r.board[0].leftVal, right: r.board[r.board.length-1].rightVal };
+  }
+
+  // ---------------- Room mode helpers ----------------
+  function playerCount(r){ return r.playerCount === 2 ? 2 : 4; }
+  function tilesPerPlayer(r){ return r.tilesPerPlayer || (playerCount(r) === 2 ? 9 : 6); }
+  function isTwoPlayer(r){ return playerCount(r) === 2; }
+  function nextSeat(r, seat){ return (seat + 1) % playerCount(r); }
+  function passLimit(r){ return playerCount(r); }
+  function scoreSideName(r, side){
+    if(isTwoPlayer(r)){
+      const p = r.players.find(pl=>pl.seat===side);
+      return p ? p.name : ("Player " + (side + 1));
+    }
+    return side === 0 ? "Gold" : "Teal";
   }
 
   // ---------------- Room code / id ----------------
@@ -518,23 +555,27 @@
     }catch(e){ return false; }
   }
 
-  function newRoomState(code, hostName){
+  function newRoomState(code, hostName, mode){
+    const pc = mode === 2 ? 2 : 4;
+    const tph = pc === 2 ? 9 : 6;
     return {
       code,
       status: "waiting", // waiting | playing | roundEnd | matchEnd
+      playerCount: pc,
+      tilesPerPlayer: tph,
       players: [{seat:0, name: hostName}],
       targetScore: 101,
       deck: [],
       board: [], // {seat, tile:[a,b], leftVal, rightVal}
       turnSeat: 0,
       passStreak: 0,
-      scores: [0,0], // team A (seats 0,2), team B (seats 1,3)
+      scores: [0,0], // 4p: team Gold / team Teal · 2p: seat 0 / seat 1
       roundNum: 1,
       roundStarterSeat: null,
       openReq: null, // required opening tile ([d,d] on round 1, null = any)
       nextStarter: null, // who opens the next round
       lastRoundResult: null,
-      log: ["Table created."],
+      log: [`Table created (${pc} players, ${tph} tiles each).`],
       lastUpdated: Date.now()
     };
   }
@@ -556,7 +597,7 @@
       code = genCode();
       existing = await getRoom(code);
     }while(existing);
-    const r = newRoomState(code, name);
+    const r = newRoomState(code, name, parseInt($("create-mode").value, 10) === 2 ? 2 : 4);
     const ok = await setRoom(code, r);
     $("btn-create").disabled = false;
     if(!ok){ $("create-err").textContent = "Couldn't create room, try again."; return; }
@@ -577,7 +618,7 @@
       const msgs = {
         not_found: "No table found with that code. Check the code and make sure everyone opened the same link (same URL, not just the 4 letters).",
         started: "That table has already started — only players already seated can rejoin (use the same name).",
-        full: "That table is full (4 players already).",
+        full: "That table is full.",
         busy: "Couldn't grab a seat just now — try again in a moment."
       };
       $("join-err").textContent = msgs[result] || "Couldn't join — try again.";
@@ -597,11 +638,12 @@
       const already = r.players.find(p=>p.name.toLowerCase()===name.toLowerCase());
       if(already) return already.seat;
       if(r.status !== "waiting") return "started";
-      if(r.players.length >= 4) return "full";
+      if(r.players.length >= playerCount(r)) return "full";
       const takenSeats = r.players.map(p=>p.seat);
+      const limit = playerCount(r);
       let seat = 0;
-      while(takenSeats.includes(seat) && seat<4) seat++;
-      if(seat>=4) return "full";
+      while(takenSeats.includes(seat) && seat < limit) seat++;
+      if(seat >= limit) return "full";
       r.players.push({seat, name});
       pushLog(r, name + " joined the table.");
       await setRoom(code, r);
@@ -621,28 +663,75 @@
     startPolling(code, renderLobby);
   }
 
+  async function copyText(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(e){
+      try{
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        return true;
+      }catch(e2){ return false; }
+    }
+  }
+
+  $("btn-copy-code").addEventListener("click", async ()=>{
+    const code = $("lobby-code").textContent.trim();
+    if(!code) return;
+    const btn = $("btn-copy-code");
+    const ok = await copyText(code);
+    if(!ok) return;
+    btn.classList.add("copied");
+    btn.title = "Copied!";
+    setTimeout(()=>{
+      btn.classList.remove("copied");
+      btn.title = "Copy room code";
+    }, 1600);
+  });
+
   async function renderLobby(r){
     if(!r) return;
     if(r.status === "playing" || r.status === "roundEnd" || r.status === "matchEnd"){
       enterGame(r.code);
       return;
     }
+    const limit = playerCount(r);
+    const tph = tilesPerPlayer(r);
+    const two = isTwoPlayer(r);
+    $("lobby-need-players").textContent = two
+      ? `Head-to-head · ${tph} tiles each · need 2 players.`
+      : `Teams of two · ${tph} tiles each · need 4 players.`;
+    $("lobby-footnote").textContent = two
+      ? "Two players sit head-to-head. Tap Start once both have joined."
+      : "Seats 1 & 3 vs seats 2 & 4 (partners across). Tap Start once all four have joined.";
     const seatsBox = $("lobby-seats");
     seatsBox.innerHTML = "";
-    for(let s=0;s<4;s++){
+    for(let s=0; s<limit; s++){
       const p = r.players.find(pl=>pl.seat===s);
-      const team = (s%2===0) ? "team-a" : "team-b";
+      const team = two ? (s===0 ? "team-a" : "team-b") : ((s%2===0) ? "team-a" : "team-b");
       const row = document.createElement("div");
       row.className = "seat-row " + (p? "filled "+team : "");
+      let tag = "";
+      if(p){
+        if(two) tag = (s===0 ? "Player 1" : "Player 2") + (s===0 ? " · Host" : "");
+        else tag = (s%2===0?"Team Gold":"Team Teal") + (s===0?" · Host":"");
+      }
       row.innerHTML = `<span class="seat-dot"></span>
         <span class="name">${p ? escapeHtml(p.name) : "Empty seat "+(s+1)}</span>
-        <span class="tag">${p ? (s%2===0?"Team Gold":"Team Teal") + (s===0?" · Host":"") : ""}</span>`;
+        <span class="tag">${tag}</span>`;
       seatsBox.appendChild(row);
     }
     $("lobby-target").value = r.targetScore;
-    const full = r.players.length === 4;
+    const full = r.players.length === limit;
     $("btn-start").disabled = !full;
-    $("btn-start").textContent = full ? "Start game" : `Waiting for players… (${r.players.length}/4)`;
+    $("btn-start").textContent = full ? "Start game" : `Waiting for players… (${r.players.length}/${limit})`;
   }
 
   $("lobby-target").addEventListener("change", async ()=>{
@@ -659,7 +748,7 @@
     if(!session) return;
     $("btn-start").disabled = true;
     const r = await getRoom(session.code);
-    if(!r || r.players.length!==4){ $("btn-start").disabled=false; return; }
+    if(!r || r.players.length !== playerCount(r)){ $("btn-start").disabled=false; return; }
     dealNewRound(r, null);
     r.status = "playing";
     pushLog(r, "Game started — round 1.");
@@ -674,8 +763,8 @@
 
   // ---------------- Dealing ----------------
   function dealNewRound(r, starterSeatOverride){
-    // 4 players x 6 tiles = 24 dealt; the remaining 3 tiles are set aside
-    // and never used.
+    const pc = playerCount(r);
+    const tph = tilesPerPlayer(r);
     const deck = shuffle(fullDeck());
     r.deck = deck;
     r.board = [];
@@ -683,27 +772,23 @@
     r.lastRoundResult = null;
 
     if(r.roundNum === 1){
-      // First round of a match: opened by the holder of the LOWEST double that
-      // was actually dealt. Try [1,1] first, then [2,2] ... [6,6]; a couple of
-      // doubles may be hidden in the 3 set-aside tiles, but with 6 doubles and
-      // only 3 tiles set aside at least three doubles are always in play.
+      // First round: opened by the holder of the LOWEST double that was dealt.
       let starter = 0, openReq = null;
       for(let d=1; d<=6 && !openReq; d++){
-        for(let s=0; s<4; s++){
-          const hand = deck.slice(s*6, s*6+6);
+        for(let s=0; s<pc; s++){
+          const hand = deck.slice(s*tph, s*tph+tph);
           if(hand.some(t=>t[0]===d && t[1]===d)){ starter = s; openReq = [d,d]; break; }
         }
       }
       r.roundStarterSeat = starter;
       r.turnSeat = starter;
-      r.openReq = openReq; // opener must play exactly this double
+      r.openReq = openReq;
     } else {
-      // Later rounds: the previous round's winner opens with ANY tile.
       const starter = (starterSeatOverride !== null && starterSeatOverride !== undefined)
         ? starterSeatOverride : (r.roundStarterSeat || 0);
       r.roundStarterSeat = starter;
       r.turnSeat = starter;
-      r.openReq = null; // any tile may open the round
+      r.openReq = null;
     }
     r.status = "playing";
   }
@@ -760,21 +845,23 @@
     if(r.status === "waiting"){ enterLobby(r.code); return; }
 
     const mySeat = session.seat;
-    $("game-roomtag").textContent = `Room ${r.code} · Round ${r.roundNum}`;
+    $("game-roomtag").textContent = `Room ${r.code} · ${playerCount(r)}p · Round ${r.roundNum}`;
     $("game-target").textContent = `to ${r.targetScore}`;
     $("score-a").textContent = r.scores[0];
     $("score-b").textContent = r.scores[1];
     $("my-name").textContent = session.name;
 
-    // opponents strip (seats other than mine), ordered: right, partner, left
-    const order = [ (mySeat+1)%4, (mySeat+2)%4, (mySeat+3)%4 ];
+    // opponents strip
     const strip = $("seat-strip-top");
     strip.innerHTML = "";
-    order.forEach(s=>{
+    const oppSeats = isTwoPlayer(r)
+      ? [(mySeat + 1) % 2]
+      : [(mySeat+1)%4, (mySeat+2)%4, (mySeat+3)%4];
+    oppSeats.forEach(s=>{
       const p = r.players.find(pl=>pl.seat===s);
       const count = seatHand(r, s).length;
       const active = r.turnSeat === s;
-      const rel = s === (mySeat+2)%4 ? "Partner" : "Opponent";
+      const rel = isTwoPlayer(r) ? "Opponent" : (s === (mySeat+2)%4 ? "Partner" : "Opponent");
       const el = document.createElement("div");
       el.className = "opp" + (active?" active":"");
       el.innerHTML = `<span>${p?escapeHtml(p.name):"—"}</span><span style="opacity:.6;font-size:10px;">${rel}</span><span class="count">${count}</span>`;
@@ -920,7 +1007,7 @@
         (tile[0]===ends.right || tile[1]===ends.right));
       finishRound(r, "domino", session.seat, capicu);
     } else {
-      r.turnSeat = (session.seat + 1) % 4;
+      r.turnSeat = nextSeat(r, session.seat);
     }
     selectedTileIdx = null;
     await setRoom(session.code, r);
@@ -933,50 +1020,75 @@
     const p = r.players.find(pl=>pl.seat===session.seat);
     pushLog(r, `${p?p.name:"Player"} passed.`);
     r.passStreak = (r.passStreak||0) + 1;
-    if(r.passStreak >= 4){
+    if(r.passStreak >= passLimit(r)){
       finishRound(r, "blocked", null);
     } else {
-      r.turnSeat = (session.seat + 1) % 4;
+      r.turnSeat = nextSeat(r, session.seat);
     }
     await setRoom(session.code, r);
   });
 
   function finishRound(r, reason, winningSeat, capicu){
-    // Mauritian scoring: points are penalties. The LOSING team adds up the
-    // pips left in its own hands, and the first team to reach the target LOSES.
+    // Mauritian scoring: penalty points — first to the target LOSES.
     const pips = [0,0,0,0].map((_,s)=>handPips(r,s));
-    const teamPips = [pips[0]+pips[2], pips[1]+pips[3]];
-    let winningTeam, losingTeam, penalty;
-    if(reason === "domino"){
-      winningTeam = winningSeat % 2; // 0 -> team Gold, 1 -> team Teal
-      losingTeam = 1 - winningTeam;
-      penalty = teamPips[losingTeam];
-      if(capicu) penalty *= 2; // capicú: winning tile matched both ends → double
-      r.scores[losingTeam] += penalty;
-      const p = r.players.find(pl=>pl.seat===winningSeat);
-      pushLog(r, `${p?p.name:"A player"} dominoed${capicu?" on both ends (capicú — doubled)":""}! Team ${losingTeam===0?"Gold":"Teal"} takes ${penalty} points.`);
-      r.lastRoundResult = { reason, winningTeam, losingTeam, penalty, winningSeat, capicu: !!capicu };
-    } else {
-      if(teamPips[0] === teamPips[1]){
-        winningTeam = null; losingTeam = null; penalty = 0;
-        pushLog(r, `Blocked round — tied on pips, no points.`);
-        r.lastRoundResult = { reason, winningTeam: null, losingTeam: null, penalty: 0, winningSeat: null };
-      } else {
-        losingTeam = teamPips[0] > teamPips[1] ? 0 : 1; // more pips = loser
-        winningTeam = 1 - losingTeam;
-        penalty = teamPips[losingTeam];
-        r.scores[losingTeam] += penalty;
-        pushLog(r, `Blocked round — Team ${losingTeam===0?"Gold":"Teal"} had more pips, takes ${penalty} points.`);
-        r.lastRoundResult = { reason, winningTeam, losingTeam, penalty, winningSeat: null };
-      }
-    }
+    let winningTeam, losingTeam, losingSeat, penalty;
+    const two = isTwoPlayer(r);
 
-    // Who opens the next round (they may lay any tile, since it isn't round 1):
-    // the player who dominoed, or — on a block — the winning team's seat. On a
-    // pip tie, whoever opened this round opens again.
-    if(reason === "domino") r.nextStarter = winningSeat;
-    else if(winningTeam !== null) r.nextStarter = (r.roundStarterSeat % 2 === winningTeam) ? r.roundStarterSeat : (r.roundStarterSeat + 1) % 4;
-    else r.nextStarter = r.roundStarterSeat;
+    if(two){
+      if(reason === "domino"){
+        losingSeat = winningSeat === 0 ? 1 : 0;
+        penalty = pips[losingSeat];
+        if(capicu) penalty *= 2;
+        r.scores[losingSeat] += penalty;
+        const w = r.players.find(pl=>pl.seat===winningSeat);
+        const loserName = scoreSideName(r, losingSeat);
+        pushLog(r, `${w?w.name:"A player"} dominoed${capicu?" on both ends (capicú — doubled)":""}! ${loserName} takes ${penalty} points.`);
+        r.lastRoundResult = { reason, winningSeat, losingSeat, penalty, capicu: !!capicu, twoPlayer: true };
+      } else {
+        if(pips[0] === pips[1]){
+          losingSeat = null; penalty = 0;
+          pushLog(r, `Blocked round — tied on pips, no points.`);
+          r.lastRoundResult = { reason, winningSeat: null, losingSeat: null, penalty: 0, twoPlayer: true };
+        } else {
+          losingSeat = pips[0] > pips[1] ? 0 : 1;
+          penalty = pips[losingSeat];
+          r.scores[losingSeat] += penalty;
+          pushLog(r, `Blocked round — ${scoreSideName(r, losingSeat)} had more pips, takes ${penalty} points.`);
+          r.lastRoundResult = { reason, winningSeat: 1 - losingSeat, losingSeat, penalty, twoPlayer: true };
+        }
+      }
+      if(reason === "domino") r.nextStarter = winningSeat;
+      else if(losingSeat !== null) r.nextStarter = 1 - losingSeat;
+      else r.nextStarter = r.roundStarterSeat;
+    } else {
+      const teamPips = [pips[0]+pips[2], pips[1]+pips[3]];
+      if(reason === "domino"){
+        winningTeam = winningSeat % 2;
+        losingTeam = 1 - winningTeam;
+        penalty = teamPips[losingTeam];
+        if(capicu) penalty *= 2;
+        r.scores[losingTeam] += penalty;
+        const p = r.players.find(pl=>pl.seat===winningSeat);
+        pushLog(r, `${p?p.name:"A player"} dominoed${capicu?" on both ends (capicú — doubled)":""}! Team ${losingTeam===0?"Gold":"Teal"} takes ${penalty} points.`);
+        r.lastRoundResult = { reason, winningTeam, losingTeam, penalty, winningSeat, capicu: !!capicu, twoPlayer: false };
+      } else {
+        if(teamPips[0] === teamPips[1]){
+          winningTeam = null; losingTeam = null; penalty = 0;
+          pushLog(r, `Blocked round — tied on pips, no points.`);
+          r.lastRoundResult = { reason, winningTeam: null, losingTeam: null, penalty: 0, winningSeat: null, twoPlayer: false };
+        } else {
+          losingTeam = teamPips[0] > teamPips[1] ? 0 : 1;
+          winningTeam = 1 - losingTeam;
+          penalty = teamPips[losingTeam];
+          r.scores[losingTeam] += penalty;
+          pushLog(r, `Blocked round — Team ${losingTeam===0?"Gold":"Teal"} had more pips, takes ${penalty} points.`);
+          r.lastRoundResult = { reason, winningTeam, losingTeam, penalty, winningSeat: null, twoPlayer: false };
+        }
+      }
+      if(reason === "domino") r.nextStarter = winningSeat;
+      else if(winningTeam !== null) r.nextStarter = (r.roundStarterSeat % 2 === winningTeam) ? r.roundStarterSeat : (r.roundStarterSeat + 1) % 4;
+      else r.nextStarter = r.roundStarterSeat;
+    }
 
     if(r.scores[0] >= r.targetScore || r.scores[1] >= r.targetScore){
       r.status = "matchEnd";
@@ -989,21 +1101,31 @@
     const overlay = $("overlay-end");
     overlay.classList.remove("hidden");
     const result = r.lastRoundResult || {};
+    const two = isTwoPlayer(r);
     if(r.status === "matchEnd"){
-      // points are penalties — the team with FEWER points wins
-      const winTeam = r.scores[0] <= r.scores[1] ? 0 : 1;
-      const loseTeam = 1 - winTeam;
+      const winSide = r.scores[0] <= r.scores[1] ? 0 : 1;
+      const loseSide = 1 - winSide;
       $("end-title").textContent = "Match over!";
-      $("end-detail").textContent = `Team ${loseTeam===0?"Gold":"Teal"} hit ${r.targetScore} first and loses. Team ${winTeam===0?"Gold":"Teal"} wins the table, ${r.scores[0]} – ${r.scores[1]}.`;
+      if(two){
+        $("end-detail").textContent = `${scoreSideName(r, loseSide)} hit ${r.targetScore} first and loses. ${scoreSideName(r, winSide)} wins the table, ${r.scores[0]} – ${r.scores[1]}.`;
+      } else {
+        $("end-detail").textContent = `Team ${loseSide===0?"Gold":"Teal"} hit ${r.targetScore} first and loses. Team ${winSide===0?"Gold":"Teal"} wins the table, ${r.scores[0]} – ${r.scores[1]}.`;
+      }
       $("end-score").textContent = `${r.scores[0]} – ${r.scores[1]}`;
       $("btn-next-round").textContent = "Start a new match";
     } else {
       $("end-title").textContent = `Round ${r.roundNum} complete`;
       if(result.reason === "domino"){
         const p = r.players.find(pl=>pl.seat===result.winningSeat);
-        $("end-detail").textContent = `${p?p.name:"A player"} dominoed${result.capicu?" on both ends — capicú, points doubled":""} for Team ${result.winningTeam===0?"Gold":"Teal"}. Team ${result.losingTeam===0?"Gold":"Teal"} takes +${result.penalty} points.`;
-      } else if(result.losingTeam===null || result.losingTeam===undefined){
+        if(two){
+          $("end-detail").textContent = `${p?p.name:"A player"} dominoed${result.capicu?" on both ends — capicú, points doubled":""}. ${scoreSideName(r, result.losingSeat)} takes +${result.penalty} points.`;
+        } else {
+          $("end-detail").textContent = `${p?p.name:"A player"} dominoed${result.capicu?" on both ends — capicú, points doubled":""} for Team ${result.winningTeam===0?"Gold":"Teal"}. Team ${result.losingTeam===0?"Gold":"Teal"} takes +${result.penalty} points.`;
+        }
+      } else if((two && result.losingSeat==null) || (!two && result.losingTeam==null)){
         $("end-detail").textContent = "Table blocked — tied on pips, no points.";
+      } else if(two){
+        $("end-detail").textContent = `Table blocked — ${scoreSideName(r, result.losingSeat)} had more pips, takes +${result.penalty} points.`;
       } else {
         $("end-detail").textContent = `Table blocked — Team ${result.losingTeam===0?"Gold":"Teal"} had more pips, takes +${result.penalty} points.`;
       }
